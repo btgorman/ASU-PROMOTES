@@ -23,7 +23,7 @@ def main():
 
     cost_list = cost_calculations(SA_rox, dictionary, volume_hs, mol_abo3_max, A_sf, energy_16max, r_sb, A_hs)
 
-    predict_dispatch_schedule(time_balance_output_list, dni_array)
+    tot_approx_op_hours = predict_dispatch_schedule(time_balance_output_list, dni_array)
 
     # Error checking time balance output list
     for listelem in time_balance_output_list:
@@ -53,9 +53,14 @@ def main():
     ROx_eta = ROx_eta_num / ROx_eta_den
     print('SR3 efficiency is', 100.0 * SR3_eta_num / SR3_eta_den, '%')
     print('ROx efficiency is', 100.0 * ROx_eta, '%')
-    sys_eta_num = sum(time_balance_output_list[10][:]) - sum(time_balance_output_list[8][:]) + ROx_eta * dictionary['e_hs_end'] + dictionary['e_cs_end']
-    sys_eta_den = sum(time_balance_output_list[1][:]) + sum(time_balance_output_list[14][:]) + sum(time_balance_output_list[15][:]) + ROx_eta * dictionary['e_hs_begin'] + dictionary['e_cs_begin']
-    print('System-boundary efficiency is', 100.0 * sys_eta_num / sys_eta_den, '%')
+    
+    sys_th_eta_num = sum(time_balance_output_list[10][:]) - sum(time_balance_output_list[8][:]) + ROx_eta * dictionary['e_hs_end'] + dictionary['e_cs_end']
+    sys_th_eta_den = sum(time_balance_output_list[1][:])  + ROx_eta * dictionary['e_hs_begin'] + dictionary['e_cs_begin']
+    sys_th_eta = sys_th_eta_num / sys_th_eta_den
+    sys_ap_eta_num = sum(time_balance_output_list[14][:]) + sum(time_balance_output_list[15][:])
+    sys_ap_eta_den = tot_approx_op_hours * 111.7 * 1000.0 * 1000.0 # 111.7 MWe rated power
+    sys_ap_eta = 1.0 - (sys_ap_eta_num / sys_ap_eta_den)
+    print('System-boundary efficiency is', 100.0 * sys_th_eta * sys_ap_eta, '%')
 
     # plot_temperatures(SR3_temps, ROx_temps, HS_temps, CS_temps)
 
@@ -71,6 +76,7 @@ def balance_timeseries(dictionary):
     dispatch = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     for elem in range(0, len(dispatch)):
         dispatch[elem] = 1
+    # dispatch[12] = 0
     print('Running with dispatch schedule:', dispatch)
     print('')
   
@@ -239,6 +245,7 @@ def predict_dispatch_schedule(system_states, dni_array):
 
     storage_target = 6
     approx_op_hours = sum(system_states[33][:]) / max(system_states[34][:])
+    tot_approx_op_hours = approx_op_hours
     print('Approx operational hours:', approx_op_hours, '\n')
 
     index_off_sun = 12
@@ -270,6 +277,8 @@ def predict_dispatch_schedule(system_states, dni_array):
             break
 
     print('ON SUN DISPATCH', on_sun_dispatch)
+
+    return tot_approx_op_hours
 
 def plot_temperatures(SR3_temps, ROx_temps, HS_temps, CS_temps):
 

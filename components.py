@@ -6,10 +6,10 @@ def set_dni(i):
     #dni_array = [0,0,0,0,0,0,24,225,463,663,802,833,782,666,632,329,229,82,2,0,0,0,0,0] # south africa - need to figure out if this is right 833
     #dni_array =[0.0, 0.0, 0.0, 0.0, 00.0, 00.0, 00.0, 900.0, 900, 900, 900, 900, 900, 900, 900, 900, 00.0, 00.0, 00.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    #643.0
-    dni_array = [0.0, 0.0, 0.0, 0.0, 00.0, 007.0, 225.0, 573.0, 440.0, 608.0, 746.0, 643.0, 772.0, 947.0, 818.0, 867.0, 637.0, 142.0, 000.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Spring equinox -- March 19
-    # dni_array = [0.0, 0.0, 0.0, 0.0, 42.0, 453.0, 699.0, 820.0, 888.0, 920.0, 930.0, 947.0, 922.0, 867.0, 892.0, 849.0, 771.0, 611.0, 256.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Summer solstice -- June 14
-    # dni_array = [0.0, 0.0, 0.0, 0.0, 00.0, 000.0, 000.0, 566.0, 556.0, 122.0, 551.0, 811.0, 726.0, 544.0, 160.0, 018.0, 004.0, 000.0, 000.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Winter solstice -- Dec 8
+    #900.0
+    # dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 201.0, 536.0, 284.0, 549.0, 675.0, 584.0, 714.0, 881.0, 942.0, 622.0, 696.0, 534.0, 361.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Spring and Autumn equinox -- April 17
+    # dni_array = [0.0, 0.0, 0.0, 0.0, 4.0, 302.0, 502.0, 708.0, 732.0, 807.0, 826.0, 835.0, 888.0, 695.0, 786.0, 773.0, 677.0, 499.0, 172.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Summer solstice -- July 19
+    dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 420.0, 793.0, 834.0, 658.0, 627.0, 664.0, 457.0, 74.0, 322.0, 199.0, 86.0, 340.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Winter solstice -- March 12
     dni = dni_array[i]
 
     return dni, dni_array
@@ -151,7 +151,7 @@ def solve_SR3_qloss(dictionary, aperture_area, SR3_temps):
     SR3_temps[2].append(T3-273.15)
     SR3_temps[3].append(T4-273.15)
     SR3_temps[4].append(temp_0-273.15)
-
+    
     qloss = (C1-T2) / C2
     qloss = qloss * num_aper
 
@@ -943,9 +943,10 @@ def solve_work_lift(dictionary):
     g_lift = dictionary['g_lift']
     ht_lift = dictionary['ht_lift']
     eta_lift = dictionary['eta_lift']
+    parasitics = dictionary['lift_parasitic']
     g_to_kg = 0.001
 
-    energy_15 = (mol_abo3_1413 * mol_mass_abo3 * g_to_kg) * g_lift * ht_lift / eta_lift
+    energy_15 = (mol_abo3_1413 * mol_mass_abo3 * g_to_kg) * g_lift * ht_lift / eta_lift + parasitics
 
     dictionary['energy_15'] = energy_15
 
@@ -1071,8 +1072,9 @@ def vacuum_pump(dictionary):
     eta_pump = dictionary['eta_pump']
     energy_16max = dictionary['energy_16max']
     temp_0 = dictionary['temp_0']
+    parasitics = dictionary['pump_parasitic']
 
-    energy_16 = mol_o2 * R * temp_0 * math.log(p0air / p502) / eta_pump
+    energy_16 = mol_o2 * R * temp_0 * math.log(p0air / p502) / eta_pump + parasitics
     energy_16max = max(energy_16, energy_16max)
 
     dictionary['energy_16'] = energy_16
