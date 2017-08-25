@@ -1,17 +1,3 @@
-# Copyright 2017 Brandon Tom Gorman
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#    http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import CoolProp.CoolProp as CP
 import components
 from openpyxl import load_workbook
@@ -94,10 +80,12 @@ def balance_design_point(dictionary):
     print('SR3: Solar field area is', dictionary['A_sf'], 'm^2 at solar multiple of', solar_multiple)
     print('SR3: The number of receivers is', dictionary['number_of_receivers'], '(rounded up) at the input concentration factor of', dictionary['concentration_factor'], 'MW/m^2')
     print('HS/CS: If the max number of particle mols is', mol_abo3_max, ', the volume of the storage units are', volume_hs, 'm^3')
+    print('Storage: Expected number of moles for 1 hour capacity', dictionary['mol_abo3_710']*3600)
     print('ROx: At particle T_high of', dictionary['temp_7']-273.15, 'C and particle T_low of', dictionary['temp_10']-273.15,'C one pipe has length and diameter of', dictionary['L_ROx'], dictionary['D_ROx'], 'm')
     print('HX: At DNI', dni, 'and particle inlet temp', dictionary['temp_13']-273.15, 'C and effectiveness of', HX_eff, 'the UA value is', UA_HX)
     print('')
     print('System: SR3-ROx productivity ratio', 100.0*dictionary['mol_abo3_1413']/dictionary['mol_abo3_710'], '%')
+    print('')
 
     return 0
 

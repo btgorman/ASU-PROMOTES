@@ -1,32 +1,17 @@
-# Copyright 2017 Brandon Tom Gorman
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#    http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import math
 import CoolProp.CoolProp as CP
 
-def set_dni(i):
-    #dni_array =[0.0, 0.0, 0.0, 0.0, 00.0, 007.0, 225.0, 573.0, 440.0, 608.0, 746.0, 638.0, 772.0, 947.0, 818.0, 867.0, 637.0, 142.0, 000.0, 0.0, 0.0, 0.0, 0.0, 0.0] # The higher value is 947 unless we are trying to get the Design Point DNI, then put it to 900
-    #dni_array = [0,0,0,0,0,0,24,225,463,663,802,833,782,666,632,329,229,82,2,0,0,0,0,0] # south africa - need to figure out if this is right 833
-    #dni_array =[0.0, 0.0, 0.0, 0.0, 00.0, 00.0, 00.0, 900.0, 900, 900, 900, 900, 900, 900, 900, 900, 00.0, 00.0, 00.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+# def set_dni(i):
+#     #dni_array =[0.0, 0.0, 0.0, 0.0, 00.0, 007.0, 225.0, 573.0, 440.0, 608.0, 746.0, 638.0, 772.0, 947.0, 818.0, 867.0, 637.0, 142.0, 000.0, 0.0, 0.0, 0.0, 0.0, 0.0] # The higher value is 947 unless we are trying to get the Design Point DNI, then put it to 900
+#     #dni_array = [0,0,0,0,0,0,24,225,463,663,802,833,782,666,632,329,229,82,2,0,0,0,0,0] # south africa - need to figure out if this is right 833
+#     #dni_array =[0.0, 0.0, 0.0, 0.0, 00.0, 00.0, 00.0, 900.0, 900, 900, 900, 900, 900, 900, 900, 900, 00.0, 00.0, 00.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    #900.0
-    # dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 201.0, 536.0, 284.0, 549.0, 675.0, 584.0, 714.0, 881.0, 942.0, 622.0, 696.0, 534.0, 361.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Spring and Autumn equinox -- April 17
-    # dni_array = [0.0, 0.0, 0.0, 0.0, 4.0, 302.0, 502.0, 708.0, 732.0, 807.0, 826.0, 835.0, 888.0, 695.0, 786.0, 773.0, 677.0, 499.0, 172.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Summer solstice -- July 19
-    dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 420.0, 793.0, 834.0, 658.0, 627.0, 664.0, 457.0, 74.0, 322.0, 199.0, 86.0, 340.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Winter solstice -- March 12
-    dni = dni_array[i]
+#     dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 201.0, 536.0, 284.0, 549.0, 675.0, 584.0, 714.0, 881.0, 942.0, 622.0, 696.0, 534.0, 361.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Spring and Autumn equinox -- April 17
+#     # dni_array = [0.0, 0.0, 0.0, 0.0, 4.0, 302.0, 502.0, 708.0, 732.0, 807.0, 826.0, 835.0, 888.0, 695.0, 786.0, 773.0, 677.0, 499.0, 172.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Summer solstice -- July 19
+#     # dni_array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 420.0, 793.0, 834.0, 658.0, 627.0, 664.0, 457.0, 74.0, 322.0, 199.0, 86.0, 340.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # Barstow Winter solstice -- March 12
+#     dni = dni_array[i]
 
-    return dni, dni_array
+#     return dni, dni_array
 
 def solve_power_block(dictionary):
     mass_flow_air = dictionary['mass_flow_air']
@@ -160,12 +145,14 @@ def solve_SR3_qloss(dictionary, aperture_area, SR3_temps):
         nuss = (0.6 + (0.387 * rayl**(1.0/6.0)) / ( ( 1.0 + (0.559/prand)**(9.0/16.0) )**(8.0/27.0) )) ** 2
         convection_amb_air_adjust = nuss * conduct / diam
 
+    print(convection_amb_air)
+
     SR3_temps[0].append(temp_4-273.15)
     SR3_temps[1].append(T2-273.15)
     SR3_temps[2].append(T3-273.15)
     SR3_temps[3].append(T4-273.15)
     SR3_temps[4].append(temp_0-273.15)
-    
+
     qloss = (C1-T2) / C2
     qloss = qloss * num_aper
 
@@ -505,7 +492,7 @@ def calibrate_ROx(dictionary):
         m_dot_pipe_air = mol_air * air_mol_mass #kg/s
 
         max_vel = math.sqrt(2.0*part_mass*accel / (air_dens*A_p*drag_c))
-        print(max_vel)
+        print('max velocity', max_vel)
         part_dens = part_mol_mass * part_pack_dens / part_mol_vol
         dens = air_dens * (1.0 - part_pack_dens)
         pipe_vol_dot_part = m_dot_pipe_part/part_dens
@@ -925,6 +912,9 @@ def solve_cold_storage(dictionary, CS_temps):
         temp_12_new = temp_0 + numerator/denominator
 
     if temp_12_new > temp_10:
+        if temp_12_new - 1.0 >= temp_10:
+            print('Possible error in CS heat loss calculation')
+        energy_14_old_high = energy_14
         energy_14 = energy_12 + energy_10 - energy_13 - energy_25 - denominator * (temp_10 - temp_0)
         temp_12_new = temp_10
 
@@ -972,7 +962,6 @@ def solve_HX(dictionary):
     cp_abo3 = dictionary['cp_abo3']
     U_hx = dictionary['U_hx']
     area_hx = dictionary['area_hx']
-    temp_13 = dictionary['temp_13']
     temp_0 = dictionary['temp_0']
     temp_1 = dictionary['temp_1']
     temp_3 = dictionary['temp_3']
@@ -981,6 +970,16 @@ def solve_HX(dictionary):
 
     cp_o2_5 = CP.PropsSI('CPMOLAR', 'T', temp_4, 'P', pSR3, 'Oxygen')
     cp_o2_3 = CP.PropsSI('CPMOLAR', 'T', temp_3, 'P', pSR3, 'Oxygen')
+    cp_o2 = 0.5*(cp_o2_5 + cp_o2_3)
+
+    if mol_abo3_1413 > 0.0:
+        mol_dot_abo3_12 = dictionary['mol_abo3_12'] / 3600.0
+        temp_12 = dictionary['temp_12']
+        temp_10 = dictionary['temp_10']
+        temp_fraction_CS = min(mol_dot_abo3_12 / mol_abo3_1413, 1.0)
+        temp_13 = temp_12 + (1.0 - temp_fraction_CS) * (temp_10 - temp_12)
+    else:
+    	temp_13 = dictionary['temp_13']
 
     if mol_abo3_1413 > 0.0:
         c_h = mol_o2 * cp_o2_5
@@ -1002,13 +1001,16 @@ def solve_HX(dictionary):
         eta_eff = 0.0
 
     energy_1 = mol_abo3_1413 * cp_abo3 * (temp_1-temp_0)
-    energy_3 = mol_o2 * cp_o2_3 * (temp_3-temp_0)
+    energy_3 = mol_o2 * cp_o2_5 * (temp_3-temp_0)
     energy_5 = mol_o2 * cp_o2_5 * (temp_4-temp_0)
     energy_13 = mol_abo3_1413 * cp_abo3 * (temp_13-temp_0)
     energy_19 = energy_5 + energy_13 - energy_1 - energy_3
 
-    if math.fabs(energy_19) < 0.5:
+    if math.fabs(energy_19) > 0.5:
         energy_19 = 0.0
+
+    if math.fabs(energy_5 + energy_13 - energy_1 - energy_3 - energy_19) > 1.0:
+        print('HX energy imbalance warning {!s}'.format(energy_5 + energy_13 - energy_1 - energy_3 - energy_19))
 
     dictionary['temp_1'] = temp_1
     dictionary['temp_3'] = temp_3

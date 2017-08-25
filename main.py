@@ -1,23 +1,10 @@
-# Copyright 2017 Brandon Tom Gorman
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-#    http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import csv
 import CoolProp.CoolProp as CP
 import components
 from openpyxl import load_workbook
-import math
 
+import math
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,12 +19,17 @@ def main():
     time_balance_output_list = {}
     design_balance_output_list = {}
 
-    time_balance_output_list, dni_array, volume_hs, energy_16max, r_sb, A_hs, mol_abo3_max, A_sf, SR3_temps, ROx_temps, HS_temps, CS_temps = balance_timeseries(dictionary)
+    time_balance_output_list, volume_hs, energy_16max, r_sb, A_hs, mol_abo3_max, A_sf, SR3_temps, ROx_temps, HS_temps, CS_temps = balance_timeseries(dictionary)
+    tot_approx_op_hours = 0.0
+    for elem in time_balance_output_list[34][:]:
+        if elem > 0.0:
+            tot_approx_op_hours += 1.0
+    print(tot_approx_op_hours)
     SA_rox = dictionary['L_ROx'] * 2.0 * dictionary['D_ROx']
 
     cost_list = cost_calculations(SA_rox, dictionary, volume_hs, mol_abo3_max, A_sf, energy_16max, r_sb, A_hs)
 
-    tot_approx_op_hours = predict_dispatch_schedule(time_balance_output_list, dni_array)
+    # tot_approx_op_hours = predict_dispatch_schedule(time_balance_output_list, dni_array)
 
     # Error checking time balance output list
     for listelem in time_balance_output_list:
@@ -66,15 +58,29 @@ def main():
     ROx_eta_den = sum(time_balance_output_list[6][:]) - sum(time_balance_output_list[9][:])
     ROx_eta = ROx_eta_num / ROx_eta_den
     print('SR3 efficiency is', 100.0 * SR3_eta_num / SR3_eta_den, '%')
-    print('ROx efficiency is', 100.0 * ROx_eta, '%')
+    print('ROx efficiency is', 100.0 * ROx_eta, '%\n')
     
-    sys_th_eta_num = sum(time_balance_output_list[10][:]) - sum(time_balance_output_list[8][:]) + ROx_eta * dictionary['e_hs_end'] + dictionary['e_cs_end']
-    sys_th_eta_den = sum(time_balance_output_list[1][:])  + ROx_eta * dictionary['e_hs_begin'] + dictionary['e_cs_begin']
-    sys_th_eta = sys_th_eta_num / sys_th_eta_den
-    sys_ap_eta_num = sum(time_balance_output_list[14][:]) + sum(time_balance_output_list[15][:])
-    sys_ap_eta_den = tot_approx_op_hours * 111.7 * 1000.0 * 1000.0 # 111.7 MWe rated power
-    sys_ap_eta = 1.0 - (sys_ap_eta_num / sys_ap_eta_den)
-    print('System-boundary efficiency is', 100.0 * sys_th_eta * sys_ap_eta, '%')
+    scf_eta_num = sum(time_balance_output_list[1][:])
+    scf_eta_den = sum(time_balance_output_list[41][:]) * dictionary['A_sf']
+    scf_eta = scf_eta_num / scf_eta_den
+
+    pt_eta_num = sum(time_balance_output_list[6][:]) - sum(time_balance_output_list[9][:]) + ROx_eta * dictionary['e_hs_end'] + dictionary['e_cs_end']
+    pt_eta_den = sum(time_balance_output_list[1][:])  + ROx_eta * dictionary['e_hs_begin'] + dictionary['e_cs_begin']
+    pt_eta = pt_eta_num / pt_eta_den
+
+    pb_eta_num = tot_approx_op_hours * 111.7 * 1000.0 * 1000.0 # MW into W
+    pb_eta_den = sum(time_balance_output_list[6][:]) - sum(time_balance_output_list[9][:])
+    pb_eta = pb_eta_num / pb_eta_den
+
+    aux_eta_num = sum(time_balance_output_list[14][:]) + sum(time_balance_output_list[15][:])
+    aux_eta_den = tot_approx_op_hours * 111.7 * 1000.0 * 1000.0 # MW into W
+    aux_eta = 1.0 - aux_eta_num / aux_eta_den
+
+    print('Solar collection field efficiency:', 100.0 * scf_eta, '%')
+    print('Power tower efficiency:', 100.0 * pt_eta, '%')
+    print('Power block efficiency:', 100.0 * pb_eta, '%')
+    print('Auxiliary load efficiency is', 100.0 * aux_eta, '%')
+    print('System-wide efficiency is', 100.0 * scf_eta * pt_eta * pb_eta * aux_eta, '%')
 
     # plot_temperatures(SR3_temps, ROx_temps, HS_temps, CS_temps)
 
@@ -82,19 +88,32 @@ def main():
 
 #Step 3: Calculate the Time Series balance - this is the meet and bones of the code
 def balance_timeseries(dictionary):
+    percent_complete_counter = 0
     wb = load_workbook(initial_conditions, data_only=True)
     ws = wb['Sheet1']  # ws is now an IterableWorksheet
     for x in ws.rows:
         dictionary[x[0].value] = x[4].value
 
-    dispatch = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    dni_all = pd.read_csv('barstow.csv', header=1)
+    dni_all = dni_all['DNI (W/m^2)']
+
+    # dni_all = pd.read_csv('af_stellenbosch_2016.csv', header=0)
+    # dni_all = dni_all['DNICalc_Avg']
+
+    # dni_all = pd.read_csv('au_alice_springs_2015_dni.csv', header=None)
+    # dni_all = dni_all[0]
+
+    hours_in_a_year = int(len(dni_all.index))
+    print(hours_in_a_year)
+
+    dispatch = [0] * hours_in_a_year
     for elem in range(0, len(dispatch)):
         dispatch[elem] = 1
     # dispatch[12] = 0
-    print('Running with dispatch schedule:', dispatch)
+    # print('Running with dispatch schedule:', dispatch)
     print('')
   
-    time_balance_outputlist = [[0 for i in range(24)] for y in range(42)]
+    time_balance_outputlist = [[0 for i in range(hours_in_a_year)] for y in range(42)]
     SR3_temps = [[],[],[],[],[]] # 0->inner wall, 1->interm inner wall, 2->interm outer wall, 3->outer wall, 4->ambient
     ROx_temps = [[],[],[],[]] # 0->inner, 1->inner wall, 2->outer wall, 3-> ambient
     HS_temps = [[],[],[],[]] # 0->inner, 1->inner wall, 2->outer wall, 3-> ambient
@@ -122,14 +141,18 @@ def balance_timeseries(dictionary):
     dictionary['e_cs_begin'] = dictionary['energy_12']
     
     # STEP 1. CALL FOR 24 HOUR LOOP to solve for the "real time" analysis for a full day
-    for i in range(24):
+    for i in range(hours_in_a_year):
         dictionary['i'] = i
         dictionary['temp_7'] = dictionary['temp_6']
         dictionary['temp_13'] = dictionary['temp_12']
         dictionary['mol_abo3_1413'] = 0.0
         dictionary['mol_abo3_710'] = 0.0
 
-        dni, dni_array = components.set_dni(i)
+        if i % 876 == 0:
+            print(percent_complete_counter, '% done')
+            percent_complete_counter += 10
+
+        dni = float(dni_all[i])
 
         # Solve power block
         components.solve_power_block(dictionary)
@@ -206,7 +229,7 @@ def balance_timeseries(dictionary):
     dictionary['e_hs_end'] = time_balance_outputlist[5][-1]
     dictionary['e_cs_end'] = time_balance_outputlist[11][-1]
     mol_abo3_6max_a=dictionary['mol_abo3_6max']
-    return time_balance_outputlist, dni_array, volume_hs, energy_16max, r_sb, A_hs, mol_abo3_max, A_sf, SR3_temps, ROx_temps, HS_temps, CS_temps
+    return time_balance_outputlist, volume_hs, energy_16max, r_sb, A_hs, mol_abo3_max, A_sf, SR3_temps, ROx_temps, HS_temps, CS_temps
 
 #Step 4. CALCULATE the cost of everything.
 def cost_calculations(SA_rox,dictionary,volume_hs, mol_abo3_6max,A_sf,energy_16max,r_sb, A_hs):
